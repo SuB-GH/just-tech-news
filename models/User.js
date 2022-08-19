@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 //"Model" is a class, and "DataTypes" is an object, both imported from Sequelize
 const { Model, DataTypes } = require('sequelize');
 const sequelize = require('../config/connection');
@@ -47,6 +48,20 @@ User.init(
     }
   },
   {
+    //"async/await. The "async" is used as a prefix to the function that contains the asynchronous function. await can be used to prefix the async function, which will then gracefully assign the value from the response to the newUserData's password property. The newUserData is then returned to the application with the hashed password.
+    hooks: {
+      // set up beforeCreate lifecycle "hook" functionality. when user creates new password
+      async beforeCreate(newUserData) {
+        newUserData.password = await bcrypt.hash(newUserData.password, 10);
+        return newUserData;
+      },
+      // set up beforeUpdate lifecycle "hook" functionality. when user updates current password
+      async beforeUpdate(updatedUserData) {
+        updatedUserData.password = await bcrypt.hash(updatedUserData.password, 10);
+        return updatedUserData;
+      }
+    },
+
     sequelize,
     timestamps: false,
     freezeTableName: true,
