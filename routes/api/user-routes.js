@@ -58,6 +58,34 @@ router.post('/', (req, res) => {
             res.status(500).json(err);
         });
 });
+// below: http://localhost:3001/api/users/login
+router.post('/login', (req, res) => {
+    // expects {email: 'lernantino@gmail.com', password: 'password1234'}
+    // this queries User table using findOne() method for the email entered by user, and assigned it to req.body.email
+      User.findOne({
+        where: {
+          email: req.body.email
+        }
+      }).then(dbUserData => {
+        if (!dbUserData) {
+            // message if user with that email was not found,
+          res.status(400).json({ message: 'No user with that email address!' });
+          return;
+        }
+        const validPassword = dbUserData.checkPassword(req.body.password);
+        if (!validPassword) {
+            res.status(400).json({ message: 'Incorrect password!' });
+            return;
+          }
+          
+          res.json({ user: dbUserData, message: 'You are now logged in!' });
+    
+        //res.json({ user: dbUserData });
+    
+        // Verify user
+    
+      });  
+    });
 
 // PUT /api/users/1
 //This .update() method combines the parameters for creating data and looking up data. We pass in req.body to provide the new data we want to use in the update and req.params.id to indicate where exactly we want that new data to be used. The SQl syntax would be:
