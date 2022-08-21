@@ -24,31 +24,42 @@ router.get('/:id', (req, res) => {
         attributes: { exclude: ['password'] },
         where: {
             id: req.params.id
-        }, 
+        },
         include: [
             {
-              model: Post,
-              attributes: ['id', 'title', 'post_url', 'created_at']
+                model: Post,
+                attributes: ['id', 'title', 'post_url', 'created_at']
+            },
+            // include the Comment model here:
+            {
+                model: Comment,
+                attributes: ['id', 'comment_text', 'created_at'],
+                include: {
+                    model: Post,
+                    attributes: ['title']
+                }
             },
             {
-              model: Post,
-              attributes: ['title'],
-              through: Vote,
-              as: 'voted_posts'
+                model: Post,
+                attributes: ['title'],
+                through: Vote,
+                as: 'voted_posts'
             }
-          ]
+        ]
+    
+          
+})
+    .then(dbUserData => {
+        if (!dbUserData) {
+            res.status(404).json({ message: 'No user found with this id' });
+            return;
+        }
+        res.json(dbUserData);
     })
-        .then(dbUserData => {
-            if (!dbUserData) {
-                res.status(404).json({ message: 'No user found with this id' });
-                return;
-            }
-            res.json(dbUserData);
-        })
-        .catch(err => {
-            console.log(err);
-            res.status(500).json(err);
-        });
+    .catch(err => {
+        console.log(err);
+        res.status(500).json(err);
+    });
 });
 
 // POST /api/users
@@ -74,30 +85,30 @@ router.post('/', (req, res) => {
 router.post('/login', (req, res) => {
     // expects {email: 'lernantino@gmail.com', password: 'password1234'}
     // this queries User table using findOne() method for the email entered by user, and assigned it to req.body.email
-      User.findOne({
+    User.findOne({
         where: {
-          email: req.body.email
+            email: req.body.email
         }
-      }).then(dbUserData => {
+    }).then(dbUserData => {
         if (!dbUserData) {
             // message if user with that email was not found,
-          res.status(400).json({ message: 'No user with that email address!' });
-          return;
+            res.status(400).json({ message: 'No user with that email address!' });
+            return;
         }
         const validPassword = dbUserData.checkPassword(req.body.password);
         if (!validPassword) {
             res.status(400).json({ message: 'Incorrect password!' });
             return;
-          }
-          
-          res.json({ user: dbUserData, message: 'You are now logged in!' });
-    
+        }
+
+        res.json({ user: dbUserData, message: 'You are now logged in!' });
+
         //res.json({ user: dbUserData });
-    
+
         // Verify user
-    
-      });  
+
     });
+});
 
 // PUT /api/users/1
 //This .update() method combines the parameters for creating data and looking up data. We pass in req.body to provide the new data we want to use in the update and req.params.id to indicate where exactly we want that new data to be used. The SQl syntax would be:
